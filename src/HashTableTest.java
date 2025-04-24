@@ -1,4 +1,6 @@
 import java.util.Random;
+import java.util.HashMap;
+import java.util.Map;
 
 class MyTestingClass {
     private int id;
@@ -55,6 +57,7 @@ class Student {
 }
 
 public class HashTableTest {
+
     public static void main(String[] args) {
         MyHashTable<MyTestingClass, Student> table = new MyHashTable<>(11);
         Random random = new Random();
@@ -71,15 +74,44 @@ public class HashTableTest {
 
         System.out.println("Finished adding elements. Table size: " + table.size());
 
-        System.out.println("\nBucket Distribution:");
+        System.out.println("\n--- Initial Bucket Distribution ---");
+        printBucketDistribution(table);
+
+        System.out.println("\n--- Tuning hashCode() ---");
+        System.out.println("Trying a different prime number in hashCode()...");
+        MyHashTable<MyTestingClass, Student> table2 = new MyHashTable<>(11);
+        for (int i = 0; i < NUM_ELEMENTS; i++) {
+            int randomId = random.nextInt(100000);
+            String randomData = "Data" + random.nextInt(5000);
+            MyTestingClass key = new MyTestingClass(randomId, randomData);
+            Student value = new Student("S" + randomId, "StudentName" + i);
+            table2.put(key, value);
+        }
+
+        System.out.println("\n--- Bucket Distribution with Tuned hashCode() ---");
+        printBucketDistribution(table2);
+    }
+
+    public static void printBucketDistribution(MyHashTable<MyTestingClass, Student> table) {
         int totalElementsChecked = 0;
+        Map<Integer, Integer> bucketSizes = new HashMap<>();
+
         for (int i = 0; i < table.getCapacity(); i++) {
             int bucketSize = table.getBucketSize(i);
+            bucketSizes.put(i, bucketSize);
             System.out.println("Bucket " + i + ": " + bucketSize + " elements");
             totalElementsChecked += bucketSize;
         }
 
         System.out.println("Total elements across buckets: " + totalElementsChecked);
         System.out.println("Expected elements: " + table.size());
+
+        double mean = (double) table.size() / table.getCapacity();
+        double sumOfSquaredDifferences = 0.0;
+        for (int size : bucketSizes.values()) {
+            sumOfSquaredDifferences += Math.pow(size - mean, 2);
+        }
+        double stdDev = Math.sqrt(sumOfSquaredDifferences / table.getCapacity());
+        System.out.println("Standard Deviation of Bucket Sizes: " + stdDev);
     }
 }
